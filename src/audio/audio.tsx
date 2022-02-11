@@ -1,18 +1,9 @@
-import {
-  HTMLAttributes,
-  forwardRef,
-  Children,
-  useMemo,
-  useEffect,
-  useRef,
-  useState,
-  ReactNode,
-  ReactChild,
-} from "react";
+import { Children, useEffect, useState, ReactNode } from "react";
 
 interface Child {
   type: string;
   props: any[];
+  ref: any;
 }
 
 export interface Props {
@@ -21,23 +12,40 @@ export interface Props {
 
 export const Audio = ({ children, ...props }: Props) => {
   const [ctx] = useState(new AudioContext());
-  // const ref = useRef<HTMLAudioElement>(null);
+
+  const handleBlur = () => {
+    ctx.suspend();
+  };
+
+  const handleFocus = () => {
+    ctx.resume();
+  };
 
   useEffect(() => {
     if (!children) return;
 
-    const nodes: AudioNode[] = Children.map<AudioNode, Child>(children, ({ type, props }) => {
+    const nodes: AudioNode[] = Children.map<AudioNode, Child>(children, ({ type, props, ref }) => {
       const className = `${type[0].toUpperCase()}${type.slice(1)}Node`;
-      const nodeType = eval(className);
-      console.log(props);
+      const AnonNode = eval(className); // FIXME possibly dangerous
+      const audioNode = new AnonNode(ctx, props);
 
-      // return eval(`new ${className}(ctx, ...props)`); // FIXME possibly dangerous
-      return new nodeType(ctx);
+      if (ref) ref.current = audioNode;
+      return audioNode;
     });
 
     connectChain(nodes, ctx);
     console.log(nodes);
   }, [children]);
+
+  useEffect(() => {
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
 
   return null;
 };
@@ -46,7 +54,6 @@ const connectChain = (nodes: AudioNode[], ctx: AudioContext) => {
   const last = nodes.length - 1;
   for (let i = 0; i < last; i++) {
     nodes[i].connect(nodes[i + 1]);
-    if (nodes[i].start) nodes[i].start();
   }
   nodes[last].connect(ctx.destination);
 };
