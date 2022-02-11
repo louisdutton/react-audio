@@ -1,6 +1,6 @@
 export type AttachCallback = string | ((child: any, parentInstance: any) => void);
 type Args<T> = T extends new (...args: any) => any ? ConstructorParameters<T> : T;
-export interface NodeProps<T, P> {
+export interface Node<T, P> {
   /** Attaches this class onto the parent under the given name and nulls it on unmount */
   attach?: string;
   /** Appends this class to an array on the parent under the given name and removes it on unmount */
@@ -19,9 +19,8 @@ export interface NodeProps<T, P> {
   key?: React.Key;
   onUpdate?: (self: T) => void;
 }
-export type Node<T, P> = NodeProps<T, P>;
 
-export type AudioNode = Node<OscillatorNode, typeof OscillatorNode>;
+// export type AudioNode = Node<AudioNode, typeof AudioNode>;
 export type OscillatorNodeProps = Node<OscillatorNode, typeof OscillatorNode>;
 export type BiquadFilterNodeProps = Node<BiquadFilterNode, typeof OscillatorNode>;
 export type ChannelMergerNodeProps = Node<ChannelMergerNode, typeof ChannelMergerNode>;
@@ -36,7 +35,8 @@ declare global {
   namespace JSX {
     interface IntrinsicElements {
       oscillator: OscillatorNodeProps;
-      biquadFilter: OscillatorNodeProps;
+      biquadFilter: BiquadFilterNodeProps;
+      gain: GainNodeProps;
     }
   }
 }
